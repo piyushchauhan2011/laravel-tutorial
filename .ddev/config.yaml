@@ -1,6 +1,6 @@
 name: laravel-tutorial
 type: php
-docroot: lessons/01-crud-and-data-modeling/app/public
+docroot: lessons/02-authn-authz-policies-roles/app/public
 php_version: "8.4"
 webserver_type: nginx-fpm
 xdebug_enabled: false
