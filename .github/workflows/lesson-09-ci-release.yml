@@ -27,7 +27,7 @@ permissions:
 jobs:
   ci:
     name: Lesson 09 Tests
-    if: github.event_name != 'pull_request' || github.event.action != 'closed'
+    if: (github.event_name == 'pull_request' && github.event.action != 'closed') || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -93,7 +93,6 @@ jobs:
 
   publish-rc-release:
     name: Publish RC Artifact and Pre-Release
-    needs: ci
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')
     runs-on: ubuntu-latest
     permissions:
@@ -120,13 +119,33 @@ jobs:
           cache: npm
           cache-dependency-path: lessons/09-testing-unit-integration-e2e/app/package-lock.json
 
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Prepare application
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          touch database/database.sqlite
+          php artisan migrate --force
+
+      - name: Install Playwright Chromium and system deps
+        run: npx playwright install --with-deps chromium
+
+      - name: Run unit and feature tests
+        run: php artisan test --compact
+
+      - name: Run Pest browser tests
+        run: ./vendor/bin/pest tests/Browser --compact
+
       - name: Install production PHP dependencies
         run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
-      - name: Install Node dependencies and build assets
-        run: |
-          npm ci
-          npm run build
+      - name: Build frontend assets
+        run: npm run build
 
       - name: Derive RC semantic version from release branch
         id: version
