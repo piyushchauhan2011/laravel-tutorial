@@ -70,6 +70,8 @@ The DDEV project serves only one docroot at a time. To run lesson 00 with clean 
 
 If you see `403 Forbidden` or nginx `404` at the project root, your current docroot likely does not match the lesson app you are trying to view.
 
+If an API call returns Laravel JSON `404` and the stack trace path points to a different lesson (for example `lessons/02-...` while you are working on lesson 03), switch docroot and restart DDEV before debugging routes.
+
 ## Git Checkpoint Convention
 
 Use checkpoint tags while progressing:

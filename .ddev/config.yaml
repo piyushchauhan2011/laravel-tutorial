@@ -1,6 +1,6 @@
 name: laravel-tutorial
 type: php
-docroot: lessons/02-authn-authz-policies-roles/app/public
+docroot: lessons/03-api-routes-sanctum-versioning/app/public
 php_version: "8.4"
 webserver_type: nginx-fpm
 xdebug_enabled: false
