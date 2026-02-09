@@ -1,6 +1,6 @@
 name: laravel-tutorial
 type: php
-docroot: .
+docroot: lessons/00-laravel-cli-foundations/app/public
 php_version: "8.4"
 webserver_type: nginx-fpm
 xdebug_enabled: false

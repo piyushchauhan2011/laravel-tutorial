@@ -53,6 +53,23 @@ When running Laravel commands, prefer `ddev exec` so apps use `DB_HOST=db` and `
 If app folders were initially created as placeholders, rerun `init-all-lessons.sh` without
 `--skip-composer`. The script will replace placeholders with real Laravel apps automatically.
 
+5. Follow guided first run:
+   - `ONBOARDING.md`
+
+## Running Lessons In Browser
+
+The DDEV project serves only one docroot at a time. To run lesson 00 with clean URLs (`/`, `/health`, `/notes`):
+
+1. Switch docroot:
+   - `ddev config --docroot=lessons/00-laravel-cli-foundations/app/public --project-type=php --auto`
+   - `ddev restart`
+2. Open:
+   - `http://laravel-tutorial.ddev.site/`
+   - `http://laravel-tutorial.ddev.site/health`
+   - `http://laravel-tutorial.ddev.site/notes`
+
+If you see `403 Forbidden` or nginx `404` at the project root, your current docroot likely does not match the lesson app you are trying to view.
+
 ## Git Checkpoint Convention
 
 Use checkpoint tags while progressing:
