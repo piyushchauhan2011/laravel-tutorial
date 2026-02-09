@@ -1,6 +1,6 @@
 name: laravel-tutorial
 type: php
-docroot: lessons/05-scheduler-and-custom-artisan-tasks/app/public
+docroot: lessons/06-postgres-ctes-analytics/app/public
 php_version: "8.4"
 webserver_type: nginx-fpm
 xdebug_enabled: false
