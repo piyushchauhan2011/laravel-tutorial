@@ -1,6 +1,6 @@
 name: laravel-tutorial
 type: php
-docroot: lessons/09-testing-unit-integration-e2e/app/public
+docroot: lessons/10-deployment-frankenphp-vps/app/public
 php_version: "8.4"
 webserver_type: nginx-fpm
 xdebug_enabled: false

@@ -1,0 +1,15 @@
+{
+    auto_https off
+    admin off
+}
+
+{$SERVER_NAME} {
+    root * /app/public
+    encode zstd gzip
+
+    php_server {
+        index index.php
+    }
+
+    file_server
+}

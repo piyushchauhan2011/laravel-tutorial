@@ -15,5 +15,6 @@ class ExampleTest extends TestCase
         $response = $this->get('/');
 
         $response->assertStatus(200);
+        $response->assertJsonPath('message', 'Lesson 10 deployment app');
     }
 }

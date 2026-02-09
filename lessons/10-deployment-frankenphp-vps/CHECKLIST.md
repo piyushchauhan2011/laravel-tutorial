@@ -3,6 +3,10 @@
 - Containerized app serves traffic correctly.
 - Health checks pass after deployment.
 - Rollback steps are documented and testable.
+- `/health` returns `status=ok` with DB connectivity.
+- `ops:health` command reports queue and scheduler runtime state.
+- Compose file includes dedicated queue worker and scheduler services.
+- Docker image is reproducible using multi-stage build.
 
 ## Cross-Lesson Quality Gates
 
