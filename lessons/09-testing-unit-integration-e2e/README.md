@@ -17,6 +17,80 @@
 3. Add integration tests for API, DB, queue interactions.
 4. Configure Playwright for auth + CRUD + admin restrictions flows.
 
+## Run This Lesson
+
+1. Activate lesson 09 docroot:
+   - `ddev config --docroot=lessons/09-testing-unit-integration-e2e/app/public --project-type=php --auto`
+   - `ddev restart`
+2. Prepare DB:
+   - `ddev exec bash -lc 'cd lessons/09-testing-unit-integration-e2e/app && php artisan migrate:fresh --seed'`
+3. Install frontend test deps:
+   - `ddev exec bash -lc 'cd lessons/09-testing-unit-integration-e2e/app && npm install'`
+4. Run unit + integration suite:
+   - `ddev exec bash -lc 'cd lessons/09-testing-unit-integration-e2e/app && php artisan test'`
+5. Run Playwright E2E:
+   - `ddev exec bash -lc 'cd lessons/09-testing-unit-integration-e2e/app && npm run e2e:install'`
+   - `ddev exec bash -lc 'cd lessons/09-testing-unit-integration-e2e/app && APP_URL=https://laravel-tutorial.ddev.site npm run e2e'`
+
+## Command Cheat Sheet
+
+Use this sequence when switching from another lesson and you see `404` on `/issues`:
+
+```bash
+cd /Users/piyushchauhan/Documents/scratch/laravel-tutorial
+
+ddev config --docroot=lessons/09-testing-unit-integration-e2e/app/public --project-type=php --auto
+ddev restart
+ddev mutagen reset
+
+ddev exec bash -lc 'cd lessons/09-testing-unit-integration-e2e/app && php artisan optimize:clear'
+ddev exec bash -lc 'cd lessons/09-testing-unit-integration-e2e/app && php artisan route:list | grep issues'
+ddev exec bash -lc 'cd lessons/09-testing-unit-integration-e2e/app && php artisan migrate:fresh --seed'
+```
+
+Create sample issues quickly:
+
+```bash
+ddev exec bash -lc "cd lessons/09-testing-unit-integration-e2e/app && php artisan tinker --execute='App\\Models\\Issue::factory()->count(3)->create([\"priority\"=>\"high\",\"status\"=>\"open\",\"reported_by\"=>\"manual\"]);'"
+```
+
+Run backend tests:
+
+```bash
+ddev exec bash -lc 'cd lessons/09-testing-unit-integration-e2e/app && php artisan test'
+```
+
+Run E2E from host terminal:
+
+```bash
+cd lessons/09-testing-unit-integration-e2e/app
+npm install
+npx playwright install chromium
+APP_URL=https://laravel-tutorial.ddev.site npm run e2e
+```
+
+Notes:
+
+- `npm WARN EBADENGINE` here is a warning (not a blocker) unless install fails.
+- If Playwright still fails, inspect traces:
+  - `npx playwright show-trace test-results/<trace-file>.zip`
+
+## Implemented Test Targets
+
+- Web issue flow:
+  - `GET /issues`
+  - `POST /issues`
+  - `PATCH /issues/{issue}/resolve`
+- API issue flow:
+  - `POST /api/v1/issues`
+  - `GET /api/v1/issues/{issue}`
+  - `PATCH /api/v1/issues/{issue}/resolve`
+- Queue job:
+  - `AssessIssueSeverity` computes `severity_score` and can auto-promote issue status to `in_progress`.
+- Unit targets:
+  - `IssuePriority` value object
+  - `IssueSeverityScorer` service
+
 ## Standards
 
 - Use Pest for unit and feature tests by default.
