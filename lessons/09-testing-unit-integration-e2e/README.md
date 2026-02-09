@@ -4,7 +4,7 @@
 
 - Build a practical Laravel testing strategy.
 - Use Pest and PHPUnit together effectively.
-- Validate user flows via Playwright.
+- Validate user flows via Playwright and Pest Browser Testing.
 
 ## Recommended Order
 
@@ -28,7 +28,12 @@
    - `ddev exec bash -lc 'cd lessons/09-testing-unit-integration-e2e/app && npm install'`
 4. Run unit + integration suite:
    - `ddev exec bash -lc 'cd lessons/09-testing-unit-integration-e2e/app && php artisan test'`
-5. Run Playwright E2E:
+5. Run Pest Browser E2E:
+   - `ddev exec bash -lc 'cd lessons/09-testing-unit-integration-e2e/app && npm install --save-dev playwright'`
+   - `ddev exec bash -lc 'cd lessons/09-testing-unit-integration-e2e/app && sudo npx playwright install-deps'` (one-time per DDEV web container)
+   - `ddev exec bash -lc 'cd lessons/09-testing-unit-integration-e2e/app && npx playwright install chromium'`
+   - `ddev exec bash -lc 'cd lessons/09-testing-unit-integration-e2e/app && ./vendor/bin/pest tests/Browser'`
+6. Run Playwright E2E:
    - `ddev exec bash -lc 'cd lessons/09-testing-unit-integration-e2e/app && npm run e2e:install'`
    - `ddev exec bash -lc 'cd lessons/09-testing-unit-integration-e2e/app && APP_URL=https://laravel-tutorial.ddev.site npm run e2e'`
 
@@ -58,6 +63,15 @@ Run backend tests:
 
 ```bash
 ddev exec bash -lc 'cd lessons/09-testing-unit-integration-e2e/app && php artisan test'
+```
+
+Run Pest browser tests:
+
+```bash
+ddev exec bash -lc 'cd lessons/09-testing-unit-integration-e2e/app && npm install --save-dev playwright'
+ddev exec bash -lc 'cd lessons/09-testing-unit-integration-e2e/app && sudo npx playwright install-deps'
+ddev exec bash -lc 'cd lessons/09-testing-unit-integration-e2e/app && npx playwright install chromium'
+ddev exec bash -lc 'cd lessons/09-testing-unit-integration-e2e/app && ./vendor/bin/pest tests/Browser'
 ```
 
 Run E2E from host terminal:
@@ -90,6 +104,8 @@ Notes:
 - Unit targets:
   - `IssuePriority` value object
   - `IssueSeverityScorer` service
+- Pest browser targets:
+  - `tests/Browser/IssueBrowserTest.php` covers the end-to-end issue submission flow using `visit(...)`.
 
 ## Standards
 
