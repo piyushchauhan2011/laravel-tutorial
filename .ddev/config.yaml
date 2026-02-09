@@ -1,6 +1,6 @@
 name: laravel-tutorial
 type: php
-docroot: lessons/07-vue-inertia-advanced-ui/app/public
+docroot: lessons/08-filament-admin-panel/app/public
 php_version: "8.4"
 webserver_type: nginx-fpm
 xdebug_enabled: false
