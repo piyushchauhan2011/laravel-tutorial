@@ -9,6 +9,11 @@ on:
       - ".github/workflows/lesson-09-ci-release.yml"
       - "lessons/09-testing-unit-integration-e2e/**"
   pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - closed
     branches:
       - main
     paths:
@@ -22,6 +27,7 @@ permissions:
 jobs:
   ci:
     name: Lesson 09 Tests
+    if: github.event_name != 'pull_request' || github.event.action != 'closed'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -85,13 +91,13 @@ jobs:
       - name: Run Pest browser tests
         run: ./vendor/bin/pest tests/Browser --compact
 
-  release-artifact:
-    name: Build Release Branch Artifact
+  publish-rc-release:
+    name: Publish RC Artifact and Pre-Release
     needs: ci
-    if: startsWith(github.ref, 'refs/heads/release/')
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/release/')
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     defaults:
       run:
         working-directory: lessons/09-testing-unit-integration-e2e/app
@@ -122,21 +128,127 @@ jobs:
           npm ci
           npm run build
 
-      - name: Derive semantic version from release branch
+      - name: Derive RC semantic version from release branch
         id: version
         run: |
           BRANCH="${GITHUB_REF_NAME}"
+          BASE_VERSION="${BRANCH#release/}"
+          BASE_VERSION="${BASE_VERSION#v}"
+
+          if ! [[ "$BASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release branch must be release/vX.Y.Z. Got: ${BRANCH}"
+            exit 1
+          fi
+
+          RC_VERSION="${BASE_VERSION}-rc.${GITHUB_RUN_NUMBER}"
+
+          echo "base_version=${BASE_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "rc_version=${RC_VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Build RC deployable tarball
+        run: |
+          mkdir -p ../../../dist
+          tar \
+            --exclude=.env \
+            --exclude=.env.* \
+            --exclude=node_modules \
+            --exclude=tests \
+            --exclude=e2e \
+            --exclude=storage/logs/* \
+            --exclude=storage/framework/cache/* \
+            --exclude=storage/framework/sessions/* \
+            --exclude=storage/framework/views/* \
+            -czf ../../../dist/lesson-09-app-v${{ steps.version.outputs.rc_version }}.tar.gz .
+
+      - name: Upload RC artifact for workflow run
+        uses: actions/upload-artifact@v4
+        with:
+          name: lesson-09-app-v${{ steps.version.outputs.rc_version }}
+          path: dist/lesson-09-app-v${{ steps.version.outputs.rc_version }}.tar.gz
+
+      - name: Publish GitHub pre-release with RC artifact
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.rc_version }}
+          target_commitish: ${{ github.sha }}
+          name: v${{ steps.version.outputs.rc_version }}
+          prerelease: true
+          generate_release_notes: true
+          files: dist/lesson-09-app-v${{ steps.version.outputs.rc_version }}.tar.gz
+
+  publish-stable-release:
+    name: Publish Stable Release After Merge to Main
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' && startsWith(github.event.pull_request.head.ref, 'release/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: lessons/09-testing-unit-integration-e2e/app
+
+    steps:
+      - name: Checkout merged main commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: lessons/09-testing-unit-integration-e2e/app/package-lock.json
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Prepare application
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          touch database/database.sqlite
+          php artisan migrate --force
+
+      - name: Install Playwright Chromium and system deps
+        run: npx playwright install --with-deps chromium
+
+      - name: Run unit and feature tests
+        run: php artisan test --compact
+
+      - name: Run Pest browser tests
+        run: ./vendor/bin/pest tests/Browser --compact
+
+      - name: Install production PHP dependencies
+        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Derive stable semantic version from merged release branch
+        id: version
+        run: |
+          BRANCH="${{ github.event.pull_request.head.ref }}"
           VERSION="${BRANCH#release/}"
           VERSION="${VERSION#v}"
 
-          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
-            echo "Release branch must be release/vX.Y.Z (or prerelease like release/vX.Y.Z-rc.1). Got: ${BRANCH}"
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Merged release branch must be release/vX.Y.Z. Got: ${BRANCH}"
             exit 1
           fi
 
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
-      - name: Build deployable tarball
+      - name: Build stable deployable tarball
         run: |
           mkdir -p ../../../dist
           tar \
@@ -151,8 +263,18 @@ jobs:
             --exclude=storage/framework/views/* \
             -czf ../../../dist/lesson-09-app-v${{ steps.version.outputs.version }}.tar.gz .
 
-      - name: Upload release branch artifact
+      - name: Upload stable artifact for workflow run
         uses: actions/upload-artifact@v4
         with:
           name: lesson-09-app-v${{ steps.version.outputs.version }}
           path: dist/lesson-09-app-v${{ steps.version.outputs.version }}.tar.gz
+
+      - name: Publish GitHub stable release with artifact
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          target_commitish: ${{ github.event.pull_request.merge_commit_sha }}
+          name: v${{ steps.version.outputs.version }}
+          prerelease: false
+          generate_release_notes: true
+          files: dist/lesson-09-app-v${{ steps.version.outputs.version }}.tar.gz
