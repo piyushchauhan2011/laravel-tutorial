@@ -1,0 +1,174 @@
+name: Lesson 09 CI and Release Artifact
+
+on:
+  push:
+    branches:
+      - main
+      - "release/v*.*.*"
+    paths:
+      - ".github/workflows/lesson-09-ci-release.yml"
+      - "lessons/09-testing-unit-integration-e2e/**"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/lesson-09-ci-release.yml"
+      - "lessons/09-testing-unit-integration-e2e/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: Lesson 09 Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lessons/09-testing-unit-integration-e2e/app
+    env:
+      APP_ENV: testing
+      APP_DEBUG: "true"
+      APP_URL: http://127.0.0.1:8000
+      DB_CONNECTION: sqlite
+      DB_DATABASE: database/database.sqlite
+      CACHE_STORE: array
+      QUEUE_CONNECTION: sync
+      SESSION_DRIVER: array
+      MAIL_MAILER: array
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: lessons/09-testing-unit-integration-e2e/app/package-lock.json
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: lessons/09-testing-unit-integration-e2e/app/vendor
+          key: ${{ runner.os }}-lesson09-composer-${{ hashFiles('lessons/09-testing-unit-integration-e2e/app/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-lesson09-composer-
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Prepare application
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          touch database/database.sqlite
+          php artisan migrate --force
+
+      - name: Install Playwright Chromium and system deps
+        run: npx playwright install --with-deps chromium
+
+      - name: Run unit and feature tests
+        run: php artisan test --compact
+
+      - name: Run Pest browser tests
+        run: ./vendor/bin/pest tests/Browser --compact
+
+      - name: Start Laravel server for Playwright E2E
+        run: |
+          php artisan serve --host=127.0.0.1 --port=8000 > /tmp/lesson09-laravel.log 2>&1 &
+          for i in {1..30}; do
+            if curl -fsS "http://127.0.0.1:8000/health" > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Laravel server did not become ready in time"
+          cat /tmp/lesson09-laravel.log || true
+          exit 1
+
+      - name: Run Playwright E2E
+        run: npm run e2e
+
+  release-artifact:
+    name: Build Release Branch Artifact
+    needs: ci
+    if: startsWith(github.ref, 'refs/heads/release/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: lessons/09-testing-unit-integration-e2e/app
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: lessons/09-testing-unit-integration-e2e/app/package-lock.json
+
+      - name: Install production PHP dependencies
+        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Install Node dependencies and build assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Derive semantic version from release branch
+        id: version
+        run: |
+          BRANCH="${GITHUB_REF_NAME}"
+          VERSION="${BRANCH#release/}"
+          VERSION="${VERSION#v}"
+
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Release branch must be release/vX.Y.Z (or prerelease like release/vX.Y.Z-rc.1). Got: ${BRANCH}"
+            exit 1
+          fi
+
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Build deployable tarball
+        run: |
+          mkdir -p ../../../dist
+          tar \
+            --exclude=.env \
+            --exclude=.env.* \
+            --exclude=node_modules \
+            --exclude=tests \
+            --exclude=e2e \
+            --exclude=storage/logs/* \
+            --exclude=storage/framework/cache/* \
+            --exclude=storage/framework/sessions/* \
+            --exclude=storage/framework/views/* \
+            -czf ../../../dist/lesson-09-app-v${{ steps.version.outputs.version }}.tar.gz .
+
+      - name: Upload release branch artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lesson-09-app-v${{ steps.version.outputs.version }}
+          path: dist/lesson-09-app-v${{ steps.version.outputs.version }}.tar.gz
