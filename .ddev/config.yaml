@@ -1,6 +1,6 @@
 name: laravel-tutorial
 type: php
-docroot: lessons/04-background-jobs-queues-workers/app/public
+docroot: lessons/05-scheduler-and-custom-artisan-tasks/app/public
 php_version: "8.4"
 webserver_type: nginx-fpm
 xdebug_enabled: false
