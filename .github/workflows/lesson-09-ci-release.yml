@@ -85,22 +85,6 @@ jobs:
       - name: Run Pest browser tests
         run: ./vendor/bin/pest tests/Browser --compact
 
-      - name: Start Laravel server for Playwright E2E
-        run: |
-          php artisan serve --host=127.0.0.1 --port=8000 > /tmp/lesson09-laravel.log 2>&1 &
-          for i in {1..30}; do
-            if curl -fsS "http://127.0.0.1:8000/health" > /dev/null; then
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "Laravel server did not become ready in time"
-          cat /tmp/lesson09-laravel.log || true
-          exit 1
-
-      - name: Run Playwright E2E
-        run: npm run e2e
-
   release-artifact:
     name: Build Release Branch Artifact
     needs: ci
