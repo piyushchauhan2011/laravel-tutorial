@@ -1,0 +1,43 @@
+# OS/editor noise
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs and temp
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+/tmp/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Runtime/build artifacts
+node_modules/
+vendor/
+public/build/
+bootstrap/cache/*.php
+storage/*.key
+storage/logs/
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/testing/
+storage/framework/views/
+
+# Test and coverage
+coverage/
+.playwright/
+playwright-report/
+test-results/
+.phpunit.result.cache
+
+# DDEV and mutagen internals
+.ddev/.cache/
+
+# Generated local placeholders
+**/.app-not-generated
