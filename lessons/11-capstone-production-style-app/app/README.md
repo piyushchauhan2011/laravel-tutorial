@@ -30,4 +30,6 @@ php artisan migrate --force
 php artisan serve
 php artisan capstone:flags
 php artisan test
+npm run browser:install
+npm run test:browser
 ```

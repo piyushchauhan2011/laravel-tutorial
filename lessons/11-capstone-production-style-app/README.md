@@ -34,6 +34,11 @@
    - `ddev exec bash -lc 'cd lessons/11-capstone-production-style-app/app && php artisan capstone:flags'`
 6. Run tests:
    - `ddev exec bash -lc 'cd lessons/11-capstone-production-style-app/app && php artisan test'`
+7. Run Pest browser tests:
+   - `ddev exec bash -lc 'cd lessons/11-capstone-production-style-app/app && npm install --save-dev playwright'`
+   - `ddev exec bash -lc 'cd lessons/11-capstone-production-style-app/app && sudo npx playwright install-deps'` (one-time per DDEV web container)
+   - `ddev exec bash -lc 'cd lessons/11-capstone-production-style-app/app && npm run browser:install'`
+   - `ddev exec bash -lc 'cd lessons/11-capstone-production-style-app/app && npm run test:browser'`
 
 ## Pennant in This Lesson
 
@@ -90,3 +95,4 @@
 - Keep lesson code documented with concise rationale comments where needed.
 - Record evidence of completion in CHECKLIST.md before moving on.
 - Keep API routes under /api/v1/* and use the shared response envelope contract.
+- Browser flow test lives at `tests/Browser/CapstoneHiringBrowserTest.php`.
