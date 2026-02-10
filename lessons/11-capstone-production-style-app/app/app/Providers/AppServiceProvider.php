@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Support\CapstoneFeatures;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Pennant\Feature;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +21,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        foreach (CapstoneFeatures::all() as $feature) {
+            Feature::define($feature, fn (): bool => CapstoneFeatures::defaultValue($feature));
+        }
     }
 }

@@ -3,6 +3,8 @@
 - End-to-end feature set works with correct authz boundaries.
 - Tests pass across unit, integration, and E2E.
 - Deployment runbook executed successfully in staging/local rehearsal.
+- Laravel Pennant feature flags are defined and can be toggled from web + API.
+- Capstone feature-flag status is available via `php artisan capstone:flags`.
 
 ## Cross-Lesson Quality Gates
 
