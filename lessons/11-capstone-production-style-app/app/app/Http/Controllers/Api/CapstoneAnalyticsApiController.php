@@ -57,8 +57,8 @@ class CapstoneAnalyticsApiController extends Controller
             )
             SELECT {$bucketExpression} AS bucket, stage, COUNT(*) AS total
             FROM filtered
-            GROUP BY bucket, stage
-            ORDER BY bucket ASC, stage ASC",
+            GROUP BY 1, stage
+            ORDER BY 1 ASC, stage ASC",
             [$from, $to]
         );
 
@@ -81,13 +81,16 @@ class CapstoneAnalyticsApiController extends Controller
                 SELECT id, referred_by_application_id, 0 AS depth
                 FROM applications
                 WHERE referred_by_application_id IS NULL
+                  AND date(applied_at) BETWEEN ? AND ?
                 UNION ALL
                 SELECT a.id, a.referred_by_application_id, rc.depth + 1
                 FROM applications a
                 JOIN referral_chain rc ON a.referred_by_application_id = rc.id
+                WHERE date(a.applied_at) BETWEEN ? AND ?
             )
             SELECT MAX(depth) AS max_depth, COUNT(*) AS nodes
-            FROM referral_chain"
+            FROM referral_chain",
+            [$from, $to, $from, $to]
         );
 
         return response()->json([
