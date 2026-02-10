@@ -1,29 +1,33 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $job->title }}</title>
-</head>
-<body style="font-family: sans-serif; max-width: 1000px; margin: 2rem auto;">
-<h1>{{ $job->title }}</h1>
-<p>
-    <a href="{{ route('jobs.index') }}">Back to jobs</a> |
-    <a href="{{ route('capstone.dashboard') }}">Feature flags</a>
-</p>
+@extends('layouts.capstone')
 
-@if (session('status'))
-    <p style="padding: 0.75rem; border: 1px solid #ddd;">{{ session('status') }}</p>
-@endif
+@section('title', $job->title)
 
-<p><strong>Department:</strong> {{ $job->department }}</p>
-<p><strong>Location:</strong> {{ $job->location }}{{ $job->is_remote ? ' (remote allowed)' : '' }}</p>
-<p><strong>Status:</strong> {{ $job->status }}</p>
-<p><strong>Description:</strong><br>{{ $job->description }}</p>
+@section('content')
+<div class="cap-card mb-4">
+    <div class="cap-card__header d-flex justify-content-between align-items-center">
+        <h1 class="h4 mb-0">{{ $job->title }}</h1>
+        <a href="{{ route('jobs.index') }}" class="btn btn-sm btn-outline-secondary">Back to jobs</a>
+    </div>
+    <div class="cap-card__body">
+        <div class="row g-3">
+            <div class="col-md-3"><strong>Department:</strong><br>{{ $job->department }}</div>
+            <div class="col-md-3"><strong>Location:</strong><br>{{ $job->location }}{{ $job->is_remote ? ' (remote)' : '' }}</div>
+            <div class="col-md-2"><strong>Status:</strong><br>{{ $job->status }}</div>
+            <div class="col-md-4"><strong>Comp:</strong><br>{{ $job->salary_min ?? '-' }} - {{ $job->salary_max ?? '-' }}</div>
+            <div class="col-12"><strong>Description:</strong><br>{{ $job->description }}</div>
+        </div>
+    </div>
+</div>
 
-<h2>Submit Application</h2>
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="cap-card h-100">
+            <div class="cap-card__header">
+                <div class="cap-section-title mb-0">Submit Application</div>
+            </div>
+            <div class="cap-card__body">
 @if ($errors->any())
-    <ul>
+    <ul class="mb-3">
         @foreach ($errors->all() as $error)
             <li>{{ $error }}</li>
         @endforeach
@@ -31,28 +35,49 @@
 @endif
 <form method="post" action="{{ route('jobs.applications.store', $job) }}">
     @csrf
-    <p><label>Name<br><input name="candidate_name" value="{{ old('candidate_name') }}" required></label></p>
-    <p><label>Email<br><input name="email" value="{{ old('email') }}" required></label></p>
-    <p>
-        <label>Source<br>
-            <select name="source">
+    <div class="mb-3">
+        <label class="cap-form__label">Name</label>
+        <input class="form-control" name="candidate_name" value="{{ old('candidate_name') }}" required>
+    </div>
+    <div class="mb-3">
+        <label class="cap-form__label">Email</label>
+        <input class="form-control" name="email" value="{{ old('email') }}" required>
+    </div>
+    <div class="mb-3">
+        <label class="cap-form__label">Source</label>
+        <select class="form-select" name="source">
                 @foreach (['career_site', 'referral', 'agency', 'linkedin'] as $source)
                     <option value="{{ $source }}" @selected(old('source', 'career_site') === $source)>{{ $source }}</option>
                 @endforeach
-            </select>
-        </label>
-    </p>
-    <p><label>Years experience<br><input name="years_experience" value="{{ old('years_experience', 3) }}" required></label></p>
-    <p><label>Resume text<br><textarea name="resume_text" rows="4" required>{{ old('resume_text') }}</textarea></label></p>
-    <p><label>Cover letter<br><textarea name="cover_letter" rows="3">{{ old('cover_letter') }}</textarea></label></p>
-    <button type="submit">Submit Application</button>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label class="cap-form__label">Years experience</label>
+        <input class="form-control" name="years_experience" value="{{ old('years_experience', 3) }}" required>
+    </div>
+    <div class="mb-3">
+        <label class="cap-form__label">Resume text</label>
+        <textarea class="form-control" name="resume_text" rows="4" required>{{ old('resume_text') }}</textarea>
+    </div>
+    <div class="mb-3">
+        <label class="cap-form__label">Cover letter</label>
+        <textarea class="form-control" name="cover_letter" rows="3">{{ old('cover_letter') }}</textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Submit Application</button>
 </form>
-
-<h2>Applications</h2>
-<table border="1" cellpadding="8" cellspacing="0" width="100%">
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="cap-card h-100">
+            <div class="cap-card__header">
+                <div class="cap-section-title mb-0">Applications</div>
+            </div>
+            <div class="cap-card__body p-0">
+<table class="table table-striped table-hover cap-table mb-0">
     <thead>
     <tr>
-        <th>Candidate</th>
+        <th class="px-3">Candidate</th>
         <th>Stage</th>
         <th>Score</th>
         <th>Source</th>
@@ -62,7 +87,7 @@
     <tbody>
     @forelse($job->applications as $application)
         <tr>
-            <td>{{ $application->candidate_name }}</td>
+            <td class="px-3">{{ $application->candidate_name }}</td>
             <td>{{ $application->stage }}</td>
             <td>{{ $application->fit_score ?? 'pending' }}</td>
             <td>{{ $application->source }}</td>
@@ -70,21 +95,24 @@
                 <form method="post" action="{{ route('jobs.applications.stage', [$job, $application]) }}">
                     @csrf
                     @method('patch')
-                    <select name="stage">
+                    <select name="stage" class="form-select form-select-sm d-inline-block w-auto">
                         @foreach (\App\Models\Application::stages() as $stage)
                             <option value="{{ $stage }}">{{ $stage }}</option>
                         @endforeach
                     </select>
-                    <button type="submit">Update</button>
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Update</button>
                 </form>
             </td>
         </tr>
     @empty
         <tr>
-            <td colspan="5">No applications yet.</td>
+            <td class="px-3" colspan="5">No applications yet.</td>
         </tr>
     @endforelse
     </tbody>
 </table>
-</body>
-</html>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection

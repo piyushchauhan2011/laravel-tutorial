@@ -1,16 +1,17 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Create Job</title>
-</head>
-<body style="font-family: sans-serif; max-width: 760px; margin: 2rem auto;">
-<h1>Create Job</h1>
-<p><a href="{{ route('jobs.index') }}">Back to jobs</a></p>
+@extends('layouts.capstone')
 
+@section('title', 'Create Job')
+
+@section('content')
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">Create Job</h1>
+    <a href="{{ route('jobs.index') }}" class="btn btn-outline-secondary">Back to jobs</a>
+</div>
+
+<div class="cap-card">
+    <div class="cap-card__body">
 @if ($errors->any())
-    <ul>
+    <ul class="mb-3">
         @foreach ($errors->all() as $error)
             <li>{{ $error }}</li>
         @endforeach
@@ -19,50 +20,54 @@
 
 <form method="post" action="{{ route('jobs.store') }}">
     @csrf
-    <p>
-        <label for="title">Title</label><br>
-        <input id="title" name="title" value="{{ old('title') }}" required style="width:100%;">
-    </p>
-    <p>
-        <label for="department">Department</label><br>
-        <input id="department" name="department" value="{{ old('department') }}" required style="width:100%;">
-    </p>
-    <p>
-        <label for="location">Location</label><br>
-        <input id="location" name="location" value="{{ old('location') }}" required style="width:100%;">
-    </p>
-    <p>
-        <label for="employment_type">Type</label><br>
-        <select id="employment_type" name="employment_type">
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="cap-form__label" for="title">Title</label>
+            <input id="title" name="title" value="{{ old('title') }}" required class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label class="cap-form__label" for="department">Department</label>
+            <input id="department" name="department" value="{{ old('department') }}" required class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label class="cap-form__label" for="location">Location</label>
+            <input id="location" name="location" value="{{ old('location') }}" required class="form-control">
+        </div>
+        <div class="col-md-4">
+            <label class="cap-form__label" for="employment_type">Type</label>
+            <select id="employment_type" name="employment_type" class="form-select">
             @foreach (['full_time', 'contract', 'internship'] as $type)
                 <option value="{{ $type }}" @selected(old('employment_type', 'full_time') === $type)>{{ $type }}</option>
             @endforeach
-        </select>
-    </p>
-    <p>
-        <label for="status">Status</label><br>
-        <select id="status" name="status">
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="cap-form__label" for="status">Status</label>
+            <select id="status" name="status" class="form-select">
             @foreach (['draft', 'open', 'closed'] as $status)
                 <option value="{{ $status }}" @selected(old('status', 'open') === $status)>{{ $status }}</option>
             @endforeach
-        </select>
-    </p>
-    <p>
-        <label><input type="checkbox" name="is_remote" value="1" @checked(old('is_remote'))> Remote allowed</label>
-    </p>
-    <p>
-        <label for="salary_min">Salary min</label><br>
-        <input id="salary_min" name="salary_min" value="{{ old('salary_min') }}">
-    </p>
-    <p>
-        <label for="salary_max">Salary max</label><br>
-        <input id="salary_max" name="salary_max" value="{{ old('salary_max') }}">
-    </p>
-    <p>
-        <label for="description">Description</label><br>
-        <textarea id="description" name="description" rows="6" style="width:100%;" required>{{ old('description') }}</textarea>
-    </p>
-    <button type="submit">Create Job</button>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="cap-form__label d-block">Remote</label>
+            <label><input type="checkbox" name="is_remote" value="1" @checked(old('is_remote'))> Remote allowed</label>
+        </div>
+        <div class="col-md-6">
+            <label class="cap-form__label" for="salary_min">Salary min</label>
+            <input id="salary_min" name="salary_min" value="{{ old('salary_min') }}" class="form-control">
+        </div>
+        <div class="col-md-6">
+            <label class="cap-form__label" for="salary_max">Salary max</label>
+            <input id="salary_max" name="salary_max" value="{{ old('salary_max') }}" class="form-control">
+        </div>
+        <div class="col-12">
+            <label class="cap-form__label" for="description">Description</label>
+            <textarea id="description" name="description" rows="6" class="form-control" required>{{ old('description') }}</textarea>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary mt-3">Create Job</button>
 </form>
-</body>
-</html>
+    </div>
+</div>
+@endsection

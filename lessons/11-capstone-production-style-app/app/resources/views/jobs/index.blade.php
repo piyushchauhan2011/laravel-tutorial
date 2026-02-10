@@ -1,48 +1,43 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Capstone Jobs</title>
-</head>
-<body style="font-family: sans-serif; max-width: 1000px; margin: 2rem auto;">
-<h1>Hiring Jobs</h1>
-<p>
-    <a href="{{ route('jobs.create') }}">Create job</a> |
-    <a href="{{ route('capstone.dashboard') }}">Feature flags</a>
-</p>
+@extends('layouts.capstone')
 
-@if (session('status'))
-    <p style="padding: 0.75rem; border: 1px solid #ddd;">{{ session('status') }}</p>
-@endif
+@section('title', 'Jobs')
 
-<table border="1" cellpadding="8" cellspacing="0" width="100%">
-    <thead>
-    <tr>
-        <th>Title</th>
-        <th>Department</th>
-        <th>Status</th>
-        <th>Location</th>
-    </tr>
-    </thead>
-    <tbody>
-    @forelse($jobs as $job)
-        <tr>
-            <td><a href="{{ route('jobs.show', $job) }}">{{ $job->title }}</a></td>
-            <td>{{ $job->department }}</td>
-            <td>{{ $job->status }}</td>
-            <td>{{ $job->location }}</td>
-        </tr>
-    @empty
-        <tr>
-            <td colspan="4">No jobs yet.</td>
-        </tr>
-    @endforelse
-    </tbody>
-</table>
+@section('content')
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">Hiring Jobs</h1>
+    <a href="{{ route('jobs.create') }}" class="btn btn-primary">Create job</a>
+</div>
 
-<div style="margin-top: 1rem;">
+<div class="cap-card">
+    <div class="cap-card__body p-0">
+        <table class="table table-striped table-hover cap-table mb-0">
+            <thead>
+            <tr>
+                <th class="px-3">Title</th>
+                <th>Department</th>
+                <th>Status</th>
+                <th>Location</th>
+            </tr>
+            </thead>
+            <tbody>
+            @forelse($jobs as $job)
+                <tr>
+                    <td class="px-3"><a href="{{ route('jobs.show', $job) }}" class="fw-semibold text-decoration-none">{{ $job->title }}</a></td>
+                    <td>{{ $job->department }}</td>
+                    <td>{{ $job->status }}</td>
+                    <td>{{ $job->location }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td class="px-3" colspan="4">No jobs yet.</td>
+                </tr>
+            @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="mt-3">
     {{ $jobs->links() }}
 </div>
-</body>
-</html>
+@endsection
