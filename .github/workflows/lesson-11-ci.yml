@@ -1,0 +1,89 @@
+name: Lesson 11 CI
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    branches:
+      - main
+    paths:
+      - ".github/workflows/lesson-11-ci.yml"
+      - "lessons/11-capstone-production-style-app/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/lesson-11-ci.yml"
+      - "lessons/11-capstone-production-style-app/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Lesson 11 Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lessons/11-capstone-production-style-app/app
+    env:
+      APP_ENV: testing
+      APP_DEBUG: "true"
+      APP_URL: http://127.0.0.1:8000
+      DB_CONNECTION: sqlite
+      DB_DATABASE: database/database.sqlite
+      CACHE_STORE: array
+      QUEUE_CONNECTION: sync
+      SESSION_DRIVER: array
+      MAIL_MAILER: array
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: lessons/11-capstone-production-style-app/app/package-lock.json
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: lessons/11-capstone-production-style-app/app/vendor
+          key: ${{ runner.os }}-lesson11-composer-${{ hashFiles('lessons/11-capstone-production-style-app/app/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-lesson11-composer-
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Prepare application
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          touch database/database.sqlite
+          php artisan migrate --force
+
+      - name: Install Playwright Chromium and system deps
+        run: npx playwright install --with-deps chromium
+
+      - name: Run unit and feature tests
+        run: php artisan test --compact
+
+      - name: Run Pest browser tests
+        run: ./vendor/bin/pest tests/Browser --compact
