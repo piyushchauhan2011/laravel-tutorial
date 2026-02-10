@@ -34,9 +34,21 @@ class CapstoneAnalyticsApiController extends Controller
         $groupBy = $validated['group_by'] ?? 'day';
 
         $driver = DB::getDriverName();
-        $bucketExpression = $groupBy === 'month'
-            ? ($driver === 'pgsql' ? "to_char(applied_at, 'YYYY-MM')" : "strftime('%Y-%m', applied_at)")
-            : ($driver === 'pgsql' ? "to_char(applied_at, 'YYYY-MM-DD')" : "strftime('%Y-%m-%d', applied_at)");
+        if ($driver === 'pgsql') {
+            $bucketExpression = $groupBy === 'month'
+                ? "to_char(applied_at, 'YYYY-MM')"
+                : "to_char(applied_at, 'YYYY-MM-DD')";
+        } elseif ($driver === 'sqlite') {
+            $bucketExpression = $groupBy === 'month'
+                ? "strftime('%Y-%m', applied_at)"
+                : "strftime('%Y-%m-%d', applied_at)";
+        } elseif ($driver === 'mysql') {
+            $bucketExpression = $groupBy === 'month'
+                ? "DATE_FORMAT(applied_at, '%Y-%m')"
+                : "DATE_FORMAT(applied_at, '%Y-%m-%d')";
+        } else {
+            abort(500, 'Unsupported database driver for analytics pipeline.');
+        }
 
         $pipeline = DB::select(
             "WITH filtered AS (
